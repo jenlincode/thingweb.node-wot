@@ -102,7 +102,7 @@ WoT.produce({
 	thing.writeProperty("lastChange", (new Date()).toISOString()); 
 	
     // set action handlers
-	thing.setActionHandler("setGPSPos", (params, options) => {
+	thing.setActionHandler("setGPSPos", (inputData) => {
 		return thing.readProperty("gpsSensor").then( (gpsSensor) => {
 			let sensor_id;
 			let nmea_type;
@@ -111,31 +111,13 @@ WoT.produce({
 			let lon = 0;
 			let alt = 0;
 
-			if (options && typeof options === 'object') {
-				console.log("\n" +  options + "")
-				if ('uriVariables' in options) {
-					if ('sensor_id' in options['uriVariables']) {
-						sensor_id = options['uriVariables']['sensor_id'];
-					}
-					if ('nmea_type' in options['uriVariables']) {
-						nmea_type = options['uriVariables']['nmea_type'];
-					}
-					if ('timestamp' in options['uriVariables']) {
-						timestamp = options['uriVariables']['timestamp'];
-					}
-					if ('lat' in options['uriVariables']) {
-						lat = options['uriVariables']['lat'];
-					}
-					if ('lon' in options['uriVariables']) {
-						lon = options['uriVariables']['lon']
-					}
-				    if('alt' in options['uriVariables']) {
-						alt = options['uriVariables']['alt']
-					}
-				}
-			}
+			sensor_id = inputData['sensor_id'];
+			nmea_type = inputData['nmea_type'];
+			timestamp = inputData['timestamp'];
+			lat = inputData['gps_position']['lat'];
+			lon = inputData['gps_position']['lon'];
+			alt = inputData['gps_position']['alt'];
 
-            console.log("Setting gpsSensor values: " + sensor_id + " " + nmea_type + " " + timestamp + " " + lat + " " + lon);
 			let gpsValue = '{ "sensor_id" : "' + sensor_id + '",' +
 							  '"nmea_type" : "' + nmea_type + '",' +
 							  '"timestamp" : "' + timestamp + '",' +
@@ -143,8 +125,11 @@ WoT.produce({
 							  '"lat" : ' + lat + ','+
 							  '"lon" : ' + lon + ',' +
 							  '"alt" : ' + alt + '}}';
-			thing.writeProperty("gpsSensor", gpsValue);
+							
+    		console.log("Setting gpsSensor values: " + sensor_id + " " + nmea_type + " " + timestamp + " " + lat + " " + lon);
 
+			// Write new gps to the gpsSensor property
+			thing.writeProperty("gpsSensor", gpsValue);
 			thing.writeProperty("lastChange", (new Date()).toISOString());
 			thing.emitEvent("change", gpsSensor);
 		});
