@@ -66,8 +66,8 @@ WoT.produce({
 				"en": "Getting the list of missions",
             },
             uriVariables: {
-				missionId: { "type": "string"},
-                command: { "type": "string"}
+				id: { "type": "string"},
+                cmd: { "type": "string"}
 			}
         }
 	},
@@ -86,14 +86,14 @@ WoT.produce({
 	console.log("Produced " + thing.title);
 	
     // init property values
-    thing.writeProperty("missions", {test: "testing value"});
-    thing.writeProperty("cmdDone", { mission_id : 0, command : ""});
+    thing.writeProperty("missions", {"test": "testing value"});
+    thing.writeProperty("cmdDone", { "id" : 0, "cmd" : ""});
 	thing.writeProperty("lastChange", (new Date()).toISOString());
 
     // set action handlers
-    thing.setActionHandler("getMissions", (params, options) => {
+    thing.setActionHandler("getMissions", (inputData) => {
         return thing.readProperty("missions").then( (missions) => {
-            console.log('original mission: ' + JSON.stringify(missions))
+            console.log('default mission: ' + JSON.stringify(missions))
             let isDetailed = false;
             let path = "/missions";
 
@@ -203,13 +203,13 @@ WoT.produce({
                 "mission_info_type":"MISSION_DETAILS"
             };
 
-            if (options && typeof options === 'object' && 'uriVariables' in options) {
-                
-                if ('detailed' in options['uriVariables']) {
-                    isDetailed = options['uriVariables']['detailed'];
+
+            if (inputData && typeof inputData === 'object') {
+                if ('detailed' in inputData) {
+                    isDetailed = inputData['detailed'];
                 }
-                else if ('id' in  options['uriVariables']) {
-                    if (options['uriVariables']['id'] == 1) {
+                else if ('id' in inputData) {
+                    if (inputData['id'] == 1) {
                         res = res2;
                     }
                 }
@@ -226,7 +226,7 @@ WoT.produce({
 
             // Uncomment once Airobotics shares their IP
             /*axios.get(uri, body)
-            .then(function (response) {
+            .then(function (response) {3
                 console.log(response.data);
                 thing.writeProperty("missions", response.data);
                 thing.writeProperty("lastChange", (new Date()).toISOString());
@@ -236,7 +236,6 @@ WoT.produce({
                 console.log(error);
             });
             */
-            res = res2;
 
             //console.log(response.data);
             console.log('Result: ' + res)
@@ -247,31 +246,29 @@ WoT.produce({
     });
 	thing.setActionHandler("cmd", (inputData) => {
 		return thing.readProperty("cmdDone").then( (cmdDone) => {
-            let commandDone = { "mission_id": 0, "command_done" : ""};
+            let commandDone = { "id": 0, "cmd" : ""};
             if (inputData != null) {
                 let command;
                 let missionId;
 
-                if (inputData["missionId"]) {
-                    missionId = inputData["missionId"];
+                if (inputData["id"] ) {
+                    missionId = inputData["id"];
                 }
-                if (inputData["command"]) {
-                    command = inputData["command"];
+                if (inputData["cmd"]) {
+                    command = inputData["cmd"];
 
                     if (command == "return"){
                         command = "return_home"
                     }
                 }
-
+                console.log(missionId + " " + command)
                 if (missionId != null && command != null) {
                     let path = "/missions/" + missionId + "/" + command;
 
-                    console.log("########### " + command)
-
                     let uri = url + path;
-                    console.log("!!!!!!!!!! "+ uri);
+                    console.log("URL: "+ uri);
 
-                    commandDone = {"mission_id" : missionId, "command_done" : command};
+                    commandDone = {"id" : missionId, "cmd" : command};
                     
                    /* axios.put(uri)
                    .then(function (response) {
